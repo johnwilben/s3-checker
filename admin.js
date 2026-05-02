@@ -48,7 +48,7 @@ async function loadSubmissions() {
     tbody.innerHTML = '<tr><td colspan="9" class="empty-state">⏳ Loading submissions...</td></tr>';
 
     try {
-        const { data, error } = await supabase
+        const { data, error } = await db
             .from('submissions')
             .select('*')
             .order('submitted_at', { ascending: false });
@@ -258,7 +258,7 @@ saveGradeBtn.addEventListener('click', async () => {
     saveGradeBtn.textContent = '⏳ Saving...';
 
     try {
-        const { error } = await supabase
+        const { error } = await db
             .from('submissions')
             .update({
                 score_content_design: contentScore,

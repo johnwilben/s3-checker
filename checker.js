@@ -1,7 +1,7 @@
 // =============================================
 // Supabase Client Init
 // =============================================
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // =============================================
 // Tab Navigation
@@ -153,7 +153,7 @@ async function saveSubmission(name, studentId, section, url, results) {
     };
 
     try {
-        const { data, error } = await supabase
+        const { data, error } = await db
             .from('submissions')
             .insert([submission])
             .select();
