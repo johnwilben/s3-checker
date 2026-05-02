@@ -53,10 +53,16 @@ document.getElementById('copy-results').addEventListener('click', copyResults);
 // Main Check Function
 // =============================================
 async function runCheck() {
-    const url = urlInput.value.trim();
+    let url = urlInput.value.trim();
     const studentName = studentNameInput.value.trim();
     const studentId = studentIdInput.value.trim();
     const section = studentSectionInput.value.trim();
+
+    // Auto-prepend http:// if the student forgot it
+    if (url && !url.startsWith('http://') && !url.startsWith('https://')) {
+        url = 'http://' + url;
+        urlInput.value = url;
+    }
 
     // Validate required fields
     if (!studentName || !studentId || !section || !url) {
