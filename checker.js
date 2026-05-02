@@ -19,12 +19,39 @@ document.querySelectorAll('.tab').forEach(tab => {
 // S3 URL Patterns
 // =============================================
 const S3_PATTERNS = {
-    websiteEndpointDash: /^https?:\/\/(.+)\.s3-website-([a-z0-9-]+)\.amazonaws\.com\/?$/i,
-    websiteEndpointDot: /^https?:\/\/(.+)\.s3-website\.([a-z0-9-]+)\.amazonaws\.com\/?$/i,
+    // http://bucket.s3-website-region.amazonaws.com
+    websiteEndpointDash: /^https?:\/\/(.+)\.s3-website-([a-z0-9-]+)\.amazonaws\.com\/?(.*)$/i,
+    // http://bucket.s3-website.region.amazonaws.com
+    websiteEndpointDot: /^https?:\/\/(.+)\.s3-website\.([a-z0-9-]+)\.amazonaws\.com\/?(.*)$/i,
+    // https://bucket.s3.region.amazonaws.com (REST endpoint — not website)
     s3ObjectUrl: /^https?:\/\/(.+)\.s3\.([a-z0-9-]+)\.amazonaws\.com\/?$/i,
+    // https://s3.region.amazonaws.com/bucket (path-style)
     s3PathStyle: /^https?:\/\/s3\.([a-z0-9-]+)\.amazonaws\.com\/([^/]+)\/?$/i,
+    // General S3 check
     isS3: /amazonaws\.com/i,
 };
+
+/**
+ * Convert an S3 website-endpoint URL to an HTTPS REST-endpoint URL.
+ * This lets us fetch from GitHub Pages (HTTPS) without mixed-content errors.
+ *
+ * http://bucket.s3-website-us-east-1.amazonaws.com
+ *   → https://bucket.s3.us-east-1.amazonaws.com/index.html
+ *
+ * http://bucket.s3-website.ap-southeast-1.amazonaws.com
+ *   → https://bucket.s3.ap-southeast-1.amazonaws.com/index.html
+ */
+function toHttpsUrl(url, path) {
+    path = path || '';
+    let m = url.match(S3_PATTERNS.websiteEndpointDash);
+    if (m) return `https://${m[1]}.s3.${m[2]}.amazonaws.com/${path}`;
+    m = url.match(S3_PATTERNS.websiteEndpointDot);
+    if (m) return `https://${m[1]}.s3.${m[2]}.amazonaws.com/${path}`;
+    // Already an HTTPS S3 URL — use as-is
+    if (url.startsWith('https://')) return url.replace(/\/?$/, '/') + path;
+    // Fallback: just swap http→https
+    return url.replace(/^http:\/\//, 'https://').replace(/\/?$/, '/') + path;
+}
 
 // =============================================
 // Checker Elements
@@ -85,30 +112,40 @@ async function runCheck() {
     const results = [];
 
     try {
+        // 1. URL format (validates the original URL the student typed)
         const urlCheck = checkUrlFormat(url);
         results.push(urlCheck);
 
-        const accessCheck = await checkAccessibility(url);
+        // Build the HTTPS fetch URL so we don't hit mixed-content blocks
+        const fetchUrl = toHttpsUrl(url, 'index.html');
+
+        // 2. Accessibility — fetch via HTTPS
+        const accessCheck = await checkAccessibility(fetchUrl);
         results.push(accessCheck);
 
-        const indexCheck = await checkIndexDocument(url, accessCheck);
+        // 3. Index document
+        const indexCheck = checkIndexDocument(accessCheck);
         results.push(indexCheck);
 
-        const errorCheck = await checkErrorDocument(url);
+        // 4. Error document — fetch a non-existent path via HTTPS
+        const errorFetchUrl = toHttpsUrl(url, 'this-page-does-not-exist-' + Date.now());
+        const errorCheck = await checkErrorDocument(errorFetchUrl);
         results.push(errorCheck);
 
+        // 5. Bucket policy (inferred from accessibility)
         const policyCheck = checkBucketPolicy(accessCheck);
         results.push(policyCheck);
 
-        const assetsCheck = await checkAssets(url, accessCheck);
+        // 6. Assets (parsed from HTML)
+        const assetsCheck = checkAssets(accessCheck);
         results.push(assetsCheck);
 
+        // 7-8. Manual criteria
         results.push({
             name: 'Website Content & Design',
             icon: '🧑‍🏫', score: null, maxScore: 15,
             status: 'manual', message: 'Graded manually by the instructor'
         });
-
         results.push({
             name: 'Submission Timeliness',
             icon: '🧑‍🏫', score: null, maxScore: 5,
@@ -120,8 +157,6 @@ async function runCheck() {
     }
 
     displayResults(results);
-
-    // Save to Supabase
     await saveSubmission(studentName, studentId, section, url, results);
 
     // UI: reset button
@@ -150,11 +185,8 @@ async function saveSubmission(name, studentId, section, url, results) {
         score_assets: getScore(results, 'Multiple Pages / Assets'),
         auto_total: autoTotal,
         check_details: results.map(r => ({
-            name: r.name,
-            score: r.score,
-            maxScore: r.maxScore,
-            status: r.status,
-            message: r.message
+            name: r.name, score: r.score, maxScore: r.maxScore,
+            status: r.status, message: r.message
         }))
     };
 
@@ -172,7 +204,7 @@ async function saveSubmission(name, studentId, section, url, results) {
     } catch (err) {
         console.error('Save error:', err);
         saveStatusEl.className = 'save-status error';
-        saveStatusEl.textContent = '❌ Failed to save submission. Error: ' + (err.message || 'Unknown error. Please check the Supabase configuration.');
+        saveStatusEl.textContent = '❌ Failed to save submission. Error: ' + (err.message || 'Unknown error. Check Supabase configuration.');
         saveStatusEl.style.display = 'block';
     }
 }
@@ -183,7 +215,7 @@ function getScore(results, name) {
 }
 
 // =============================================
-// Individual Check Functions
+// 1. URL Format Check (validates original URL)
 // =============================================
 function checkUrlFormat(url) {
     const result = { name: 'Correct S3 URL Format', icon: '🔗', maxScore: 15, score: 0, status: 'fail', message: '' };
@@ -207,7 +239,10 @@ function checkUrlFormat(url) {
     return result;
 }
 
-async function checkAccessibility(url) {
+// =============================================
+// 2. Accessibility Check (fetches via HTTPS)
+// =============================================
+async function checkAccessibility(fetchUrl) {
     const result = {
         name: 'Website Accessibility', icon: '🌐', maxScore: 20,
         score: 0, status: 'fail', message: '',
@@ -215,7 +250,9 @@ async function checkAccessibility(url) {
     };
 
     try {
-        const response = await fetch(url, { method: 'GET', mode: 'cors', cache: 'no-cache', redirect: 'follow' });
+        const response = await fetch(fetchUrl, {
+            method: 'GET', mode: 'cors', cache: 'no-cache', redirect: 'follow'
+        });
         result.httpStatus = response.status;
 
         if (response.ok) {
@@ -233,34 +270,18 @@ async function checkAccessibility(url) {
             result.score = 5; result.status = 'partial';
             result.message = `HTTP ${response.status} — There is an issue with the website.`;
         }
-    } catch {
-        try {
-            const probeResult = await probeUrl(url);
-            if (probeResult === 'reachable') {
-                result.score = 15; result.status = 'partial';
-                result.message = 'Website appears reachable but content cannot be verified due to CORS policy. Open the link in a new tab to verify manually.';
-                result.responseOk = true;
-            } else {
-                result.score = 0; result.status = 'fail';
-                result.message = 'Cannot access the website. Check if the URL is correct.';
-            }
-        } catch {
-            result.score = 0; result.status = 'fail';
-            result.message = 'Cannot access the website. Check the URL and static website hosting configuration.';
-        }
+    } catch (err) {
+        // CORS or network error
+        result.score = 0; result.status = 'fail';
+        result.message = 'Cannot access the website. Make sure the URL is correct, static website hosting is enabled, and the bucket policy allows public read.';
     }
     return result;
 }
 
-function probeUrl(url) {
-    return new Promise((resolve) => {
-        fetch(url, { mode: 'no-cors', cache: 'no-cache' })
-            .then(() => resolve('reachable'))
-            .catch(() => resolve('unreachable'));
-    });
-}
-
-async function checkIndexDocument(url, accessCheck) {
+// =============================================
+// 3. Index Document Check
+// =============================================
+function checkIndexDocument(accessCheck) {
     const result = { name: 'Index Document (index.html)', icon: '📄', maxScore: 15, score: 0, status: 'fail', message: '' };
 
     if (accessCheck.responseOk && accessCheck.htmlContent) {
@@ -275,9 +296,6 @@ async function checkIndexDocument(url, accessCheck) {
             result.score = 5; result.status = 'partial';
             result.message = 'Server responded but returned no content.';
         }
-    } else if (accessCheck.responseOk) {
-        result.score = 10; result.status = 'partial';
-        result.message = 'Website is reachable — index.html is likely configured but content cannot be verified (CORS).';
     } else if (accessCheck.httpStatus === 404) {
         result.score = 0; result.status = 'fail';
         result.message = 'No index.html detected. Upload it to the bucket root.';
@@ -288,60 +306,63 @@ async function checkIndexDocument(url, accessCheck) {
     return result;
 }
 
-async function checkErrorDocument(url) {
+// =============================================
+// 4. Error Document Check
+// =============================================
+async function checkErrorDocument(errorFetchUrl) {
     const result = { name: 'Error Document (error.html)', icon: '🚫', maxScore: 10, score: 0, status: 'fail', message: '' };
-    const errorUrl = url.replace(/\/?$/, '/') + 'this-page-does-not-exist-' + Date.now();
 
     try {
-        const response = await fetch(errorUrl, { method: 'GET', mode: 'cors', cache: 'no-cache' });
+        const response = await fetch(errorFetchUrl, { method: 'GET', mode: 'cors', cache: 'no-cache' });
+
+        const html = await response.text().catch(() => '');
+        const htmlLower = html.toLowerCase();
 
         if (response.status === 404 || response.status === 403) {
-            try {
-                const html = await response.text();
-                const htmlLower = html.toLowerCase();
-
-                if (htmlLower.includes('<html') && !htmlLower.includes('<code>nosuchkey</code>') && !htmlLower.includes('accessdenied')) {
-                    if (htmlLower.includes('error') || htmlLower.includes('404') || htmlLower.includes('not found') || htmlLower.includes('page')) {
-                        result.score = 10; result.status = 'pass';
-                        result.message = 'Custom error page detected and working!';
-                    } else {
-                        result.score = 7; result.status = 'partial';
-                        result.message = 'A custom page is shown on error but it has no clear error message.';
-                    }
-                } else if (htmlLower.includes('nosuchkey') || htmlLower.includes('accessdenied') || htmlLower.includes('<error>')) {
-                    result.score = 0; result.status = 'fail';
-                    result.message = 'Default S3 XML error page is showing. Create an error.html and configure it in Static Website Hosting settings.';
-                } else if (html.trim().length > 50) {
-                    result.score = 7; result.status = 'partial';
-                    result.message = 'A custom response was returned but it cannot be confirmed as a proper error page.';
+            if (htmlLower.includes('<html') && !htmlLower.includes('<code>nosuchkey</code>') && !htmlLower.includes('accessdenied')) {
+                if (htmlLower.includes('error') || htmlLower.includes('404') || htmlLower.includes('not found') || htmlLower.includes('page')) {
+                    result.score = 10; result.status = 'pass';
+                    result.message = 'Custom error page detected and working!';
                 } else {
-                    result.score = 0; result.status = 'fail';
-                    result.message = 'No custom error page found. Create an error.html file.';
+                    result.score = 7; result.status = 'partial';
+                    result.message = 'A custom page is shown on error but has no clear error message.';
                 }
-            } catch {
-                result.score = 4; result.status = 'partial';
-                result.message = 'Server responded to the error URL but the content could not be read.';
+            } else if (htmlLower.includes('nosuchkey') || htmlLower.includes('accessdenied') || htmlLower.includes('<error>')) {
+                result.score = 0; result.status = 'fail';
+                result.message = 'Default S3 XML error page is showing. Create an error.html and configure it in Static Website Hosting settings.';
+            } else if (html.trim().length > 50) {
+                result.score = 7; result.status = 'partial';
+                result.message = 'A custom response was returned but cannot be confirmed as a proper error page.';
+            } else {
+                result.score = 0; result.status = 'fail';
+                result.message = 'No custom error page found. Create an error.html file.';
             }
         } else if (response.ok) {
-            result.score = 4; result.status = 'partial';
-            result.message = 'Error URL returned HTTP 200 — possible redirect to index. Check if a separate error.html exists.';
+            // S3 REST endpoint returns 200 with NoSuchKey XML for missing objects
+            if (htmlLower.includes('nosuchkey')) {
+                result.score = 0; result.status = 'fail';
+                result.message = 'No custom error page configured. Create an error.html and set it in Static Website Hosting.';
+            } else {
+                result.score = 4; result.status = 'partial';
+                result.message = 'Non-existent page returned HTTP 200. Check if a separate error.html exists.';
+            }
         }
     } catch {
         result.score = 0; result.status = 'fail';
-        result.message = 'Cannot check the error page (CORS issue). Verify manually by visiting a non-existent page on your website.';
+        result.message = 'Cannot check the error page. Verify manually by visiting a non-existent page on your website.';
     }
     return result;
 }
 
+// =============================================
+// 5. Bucket Policy Check
+// =============================================
 function checkBucketPolicy(accessCheck) {
     const result = { name: 'Bucket Policy (Public Access)', icon: '🔓', maxScore: 10, score: 0, status: 'fail', message: '' };
 
     if (accessCheck.responseOk && accessCheck.httpStatus === 200) {
         result.score = 10; result.status = 'pass';
         result.message = 'Bucket policy is correct — public read access is working!';
-    } else if (accessCheck.responseOk) {
-        result.score = 7; result.status = 'partial';
-        result.message = 'Website is reachable — bucket policy is likely correct.';
     } else if (accessCheck.httpStatus === 403) {
         result.score = 0; result.status = 'fail';
         result.message = '403 Forbidden — no public access. Add the bucket policy and uncheck "Block all public access".';
@@ -352,17 +373,15 @@ function checkBucketPolicy(accessCheck) {
     return result;
 }
 
-async function checkAssets(url, accessCheck) {
+// =============================================
+// 6. Assets Check
+// =============================================
+function checkAssets(accessCheck) {
     const result = { name: 'Multiple Pages / Assets', icon: '📁', maxScore: 10, score: 0, status: 'fail', message: '' };
 
     if (!accessCheck.responseOk || !accessCheck.htmlContent) {
-        if (accessCheck.responseOk) {
-            result.score = 4; result.status = 'partial';
-            result.message = 'Cannot analyze assets (CORS). Verify manually if CSS, JS, and images are present.';
-        } else {
-            result.score = 0; result.status = 'fail';
-            result.message = 'Cannot check — website is not accessible.';
-        }
+        result.score = 0; result.status = 'fail';
+        result.message = 'Cannot check — website is not accessible.';
         return result;
     }
 
