@@ -59,6 +59,7 @@ body {
     height: 400px;
     background: rgba(255, 153, 0, 0.1);
     border-radius: 50%;
+    pointer-events: none;
 }
 
 .header-icon {
@@ -102,6 +103,8 @@ body {
     cursor: pointer;
     transition: all 0.2s;
     border-bottom: 3px solid transparent;
+    position: relative;
+    z-index: 1;
 }
 
 .tab:hover {
@@ -382,6 +385,8 @@ body {
     font-weight: 700;
     cursor: pointer;
     transition: all 0.2s;
+    position: relative;
+    z-index: 1;
 }
 
 .check-button:hover {
@@ -542,6 +547,8 @@ body {
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s;
+    position: relative;
+    z-index: 1;
 }
 
 .action-btn:hover {
@@ -747,6 +754,8 @@ body {
     cursor: pointer;
     transition: all 0.2s;
     white-space: nowrap;
+    position: relative;
+    z-index: 1;
 }
 
 .grade-btn:hover {
@@ -775,7 +784,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 1000;
+    z-index: 9999;
     padding: 20px;
 }
 

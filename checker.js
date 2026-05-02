@@ -42,12 +42,12 @@ const saveStatusEl = document.getElementById('save-status');
 checkBtn.addEventListener('click', runCheck);
 urlInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') runCheck(); });
 
-document.getElementById('recheck-btn')?.addEventListener('click', () => {
+document.getElementById('recheck-btn').addEventListener('click', () => {
     resultsSection.style.display = 'none';
     urlInput.focus();
 });
 
-document.getElementById('copy-results')?.addEventListener('click', copyResults);
+document.getElementById('copy-results').addEventListener('click', copyResults);
 
 // =============================================
 // Main Check Function
@@ -91,7 +91,7 @@ async function runCheck() {
         const errorCheck = await checkErrorDocument(url);
         results.push(errorCheck);
 
-        const policyCheck = checkBucketPolicy(accessCheck, urlCheck);
+        const policyCheck = checkBucketPolicy(accessCheck);
         results.push(policyCheck);
 
         const assetsCheck = await checkAssets(url, accessCheck);
@@ -100,13 +100,13 @@ async function runCheck() {
         results.push({
             name: 'Website Content & Design',
             icon: '🧑‍🏫', score: null, maxScore: 15,
-            status: 'manual', message: 'Manu-manong i-grade ng instructor'
+            status: 'manual', message: 'Graded manually by the instructor'
         });
 
         results.push({
             name: 'Submission Timeliness',
             icon: '🧑‍🏫', score: null, maxScore: 5,
-            status: 'manual', message: 'Manu-manong i-grade ng instructor'
+            status: 'manual', message: 'Graded manually by the instructor'
         });
 
     } catch (err) {
@@ -161,12 +161,12 @@ async function saveSubmission(name, studentId, section, url, results) {
         if (error) throw error;
 
         saveStatusEl.className = 'save-status success';
-        saveStatusEl.textContent = '✅ Submission saved successfully! Ang instructor mo na ang mag-grade ng Content & Design at Submission score.';
+        saveStatusEl.textContent = '✅ Submission saved successfully! Your instructor will grade Content & Design and Submission scores.';
         saveStatusEl.style.display = 'block';
     } catch (err) {
         console.error('Save error:', err);
         saveStatusEl.className = 'save-status error';
-        saveStatusEl.textContent = '❌ Hindi ma-save ang submission. Error: ' + (err.message || 'Unknown error. I-check ang Supabase config.');
+        saveStatusEl.textContent = '❌ Failed to save submission. Error: ' + (err.message || 'Unknown error. Please check the Supabase configuration.');
         saveStatusEl.style.display = 'block';
     }
 }
@@ -184,19 +184,19 @@ function checkUrlFormat(url) {
 
     if (S3_PATTERNS.websiteEndpointDash.test(url) || S3_PATTERNS.websiteEndpointDot.test(url)) {
         result.score = 15; result.status = 'pass';
-        result.message = 'Tama ang S3 website endpoint format!';
+        result.message = 'Correct S3 website endpoint format!';
     } else if (S3_PATTERNS.s3ObjectUrl.test(url)) {
         result.score = 10; result.status = 'partial';
-        result.message = 'S3 URL ito pero hindi website endpoint. Gamitin ang URL mula sa Properties → Static website hosting.';
+        result.message = 'This is an S3 URL but not the website endpoint. Use the URL from Properties → Static website hosting.';
     } else if (S3_PATTERNS.s3PathStyle.test(url)) {
         result.score = 5; result.status = 'partial';
-        result.message = 'Path-style S3 URL ito. Gamitin ang website endpoint URL.';
+        result.message = 'This is a path-style S3 URL. Use the website endpoint URL instead.';
     } else if (S3_PATTERNS.isS3.test(url)) {
         result.score = 5; result.status = 'partial';
-        result.message = 'May S3 reference pero mali ang format.';
+        result.message = 'Contains an S3 reference but the format is incorrect.';
     } else {
         result.score = 0; result.status = 'fail';
-        result.message = 'Hindi ito S3 URL. Siguraduhing S3 website endpoint ang isusumit.';
+        result.message = 'This is not an S3 URL. Make sure to submit the S3 website endpoint.';
     }
     return result;
 }
@@ -219,28 +219,28 @@ async function checkAccessibility(url) {
             try { result.htmlContent = await response.text(); } catch { result.htmlContent = ''; }
         } else if (response.status === 403) {
             result.score = 0; result.status = 'fail';
-            result.message = 'HTTP 403 Forbidden — Hindi public ang bucket. I-check ang bucket policy.';
+            result.message = 'HTTP 403 Forbidden — The bucket is not public. Check the bucket policy and "Block public access" settings.';
         } else if (response.status === 404) {
             result.score = 5; result.status = 'partial';
-            result.message = 'HTTP 404 — Walang index.html. I-upload ang index.html sa bucket.';
+            result.message = 'HTTP 404 — No index.html found. Upload index.html to the bucket.';
         } else {
             result.score = 5; result.status = 'partial';
-            result.message = `HTTP ${response.status} — May issue ang website.`;
+            result.message = `HTTP ${response.status} — There is an issue with the website.`;
         }
     } catch {
         try {
             const probeResult = await probeUrl(url);
             if (probeResult === 'reachable') {
                 result.score = 15; result.status = 'partial';
-                result.message = 'Website appears reachable pero hindi ma-verify ang content (CORS). Buksan sa bagong tab para i-verify.';
+                result.message = 'Website appears reachable but content cannot be verified due to CORS policy. Open the link in a new tab to verify manually.';
                 result.responseOk = true;
             } else {
                 result.score = 0; result.status = 'fail';
-                result.message = 'Hindi ma-access ang website. I-check kung tama ang URL.';
+                result.message = 'Cannot access the website. Check if the URL is correct.';
             }
         } catch {
             result.score = 0; result.status = 'fail';
-            result.message = 'Hindi ma-access ang website. I-check ang URL at static website hosting config.';
+            result.message = 'Cannot access the website. Check the URL and static website hosting configuration.';
         }
     }
     return result;
@@ -261,23 +261,23 @@ async function checkIndexDocument(url, accessCheck) {
         const html = accessCheck.htmlContent.toLowerCase();
         if (html.includes('<!doctype html') || html.includes('<html') || html.includes('<head') || html.includes('<body')) {
             result.score = 15; result.status = 'pass';
-            result.message = 'index.html naka-configure at nag-lo-load ng HTML content!';
+            result.message = 'index.html is configured and loading HTML content!';
         } else if (html.length > 0) {
             result.score = 10; result.status = 'partial';
-            result.message = 'May content pero mukhang hindi proper HTML.';
+            result.message = 'Content is loading but it does not appear to be proper HTML.';
         } else {
             result.score = 5; result.status = 'partial';
-            result.message = 'Nag-respond ang server pero walang content.';
+            result.message = 'Server responded but returned no content.';
         }
     } else if (accessCheck.responseOk) {
         result.score = 10; result.status = 'partial';
-        result.message = 'Website reachable — index.html likely configured pero hindi ma-verify (CORS).';
+        result.message = 'Website is reachable — index.html is likely configured but content cannot be verified (CORS).';
     } else if (accessCheck.httpStatus === 404) {
         result.score = 0; result.status = 'fail';
-        result.message = 'Walang index.html. I-upload sa bucket root.';
+        result.message = 'No index.html detected. Upload it to the bucket root.';
     } else {
         result.score = 0; result.status = 'fail';
-        result.message = 'Hindi ma-verify — website not accessible.';
+        result.message = 'Cannot verify — website is not accessible.';
     }
     return result;
 }
@@ -295,34 +295,34 @@ async function checkErrorDocument(url) {
                 const htmlLower = html.toLowerCase();
 
                 if (htmlLower.includes('<html') && !htmlLower.includes('<code>nosuchkey</code>') && !htmlLower.includes('accessdenied')) {
-                    if (htmlLower.includes('error') || htmlLower.includes('404') || htmlLower.includes('not found') || htmlLower.includes('hindi') || htmlLower.includes('page')) {
+                    if (htmlLower.includes('error') || htmlLower.includes('404') || htmlLower.includes('not found') || htmlLower.includes('page')) {
                         result.score = 10; result.status = 'pass';
-                        result.message = 'Custom error page detected at gumagana!';
+                        result.message = 'Custom error page detected and working!';
                     } else {
                         result.score = 7; result.status = 'partial';
-                        result.message = 'May custom page pero walang clear error message.';
+                        result.message = 'A custom page is shown on error but it has no clear error message.';
                     }
                 } else if (htmlLower.includes('nosuchkey') || htmlLower.includes('accessdenied') || htmlLower.includes('<error>')) {
                     result.score = 0; result.status = 'fail';
-                    result.message = 'Default S3 XML error page. Gumawa ng error.html.';
+                    result.message = 'Default S3 XML error page is showing. Create an error.html and configure it in Static Website Hosting settings.';
                 } else if (html.trim().length > 50) {
                     result.score = 7; result.status = 'partial';
-                    result.message = 'May custom response pero hindi ma-confirm kung proper error page.';
+                    result.message = 'A custom response was returned but it cannot be confirmed as a proper error page.';
                 } else {
                     result.score = 0; result.status = 'fail';
-                    result.message = 'Walang custom error page. Gumawa ng error.html.';
+                    result.message = 'No custom error page found. Create an error.html file.';
                 }
             } catch {
                 result.score = 4; result.status = 'partial';
-                result.message = 'Server nag-respond pero hindi ma-read ang content.';
+                result.message = 'Server responded to the error URL but the content could not be read.';
             }
         } else if (response.ok) {
             result.score = 4; result.status = 'partial';
-            result.message = 'Error URL nag-return ng 200 — possible redirect. I-check kung may separate error.html.';
+            result.message = 'Error URL returned HTTP 200 — possible redirect to index. Check if a separate error.html exists.';
         }
     } catch {
         result.score = 0; result.status = 'fail';
-        result.message = 'Hindi ma-check ang error page (CORS). I-verify manually.';
+        result.message = 'Cannot check the error page (CORS issue). Verify manually by visiting a non-existent page on your website.';
     }
     return result;
 }
@@ -332,16 +332,16 @@ function checkBucketPolicy(accessCheck) {
 
     if (accessCheck.responseOk && accessCheck.httpStatus === 200) {
         result.score = 10; result.status = 'pass';
-        result.message = 'Bucket policy tama — public read access gumagana!';
+        result.message = 'Bucket policy is correct — public read access is working!';
     } else if (accessCheck.responseOk) {
         result.score = 7; result.status = 'partial';
-        result.message = 'Website reachable — bucket policy likely correct.';
+        result.message = 'Website is reachable — bucket policy is likely correct.';
     } else if (accessCheck.httpStatus === 403) {
         result.score = 0; result.status = 'fail';
-        result.message = '403 Forbidden — walang public access. I-add ang bucket policy.';
+        result.message = '403 Forbidden — no public access. Add the bucket policy and uncheck "Block all public access".';
     } else {
         result.score = 0; result.status = 'fail';
-        result.message = 'Hindi ma-verify — website not accessible.';
+        result.message = 'Cannot verify bucket policy — website is not accessible.';
     }
     return result;
 }
@@ -352,10 +352,10 @@ async function checkAssets(url, accessCheck) {
     if (!accessCheck.responseOk || !accessCheck.htmlContent) {
         if (accessCheck.responseOk) {
             result.score = 4; result.status = 'partial';
-            result.message = 'Hindi ma-analyze ang assets (CORS). I-verify manually.';
+            result.message = 'Cannot analyze assets (CORS). Verify manually if CSS, JS, and images are present.';
         } else {
             result.score = 0; result.status = 'fail';
-            result.message = 'Hindi ma-check — website not accessible.';
+            result.message = 'Cannot check — website is not accessible.';
         }
         return result;
     }
@@ -384,13 +384,13 @@ async function checkAssets(url, accessCheck) {
         result.message = `Multiple assets detected: ${findings.join(', ')}`;
     } else if (findings.length >= 1) {
         result.score = 7; result.status = 'partial';
-        result.message = `May assets: ${findings.join(', ')}. Mag-add pa para sa full score.`;
+        result.message = `Assets found: ${findings.join(', ')}. Add more pages/assets for full score.`;
     } else if (inlineStyles.length > 0 || hasInlineStyle.length > 0) {
         result.score = 4; result.status = 'partial';
-        result.message = 'Inline styles lang. Gumamit ng external CSS file.';
+        result.message = 'Only inline styles detected. Use an external CSS file for a higher score.';
     } else {
         result.score = 0; result.status = 'fail';
-        result.message = 'Walang external assets. Mag-add ng CSS, JS, images, o pages.';
+        result.message = 'No external assets detected. Add CSS, JS, images, or additional pages.';
     }
     return result;
 }

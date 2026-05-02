@@ -83,8 +83,7 @@ function populateSectionFilter() {
     const select = document.getElementById('filter-section');
     const sections = [...new Set(allSubmissions.map(s => s.section))].sort();
     
-    // Keep first option
-    select.innerHTML = '<option value="">Lahat</option>';
+    select.innerHTML = '<option value="">All</option>';
     sections.forEach(sec => {
         const opt = document.createElement('option');
         opt.value = sec;
@@ -121,7 +120,7 @@ function renderSubmissions() {
     const filtered = getFilteredSubmissions();
 
     if (filtered.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="9" class="empty-state">Walang submissions na nahanap.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="9" class="empty-state">No submissions found.</td></tr>';
         return;
     }
 
@@ -131,7 +130,7 @@ function renderSubmissions() {
         const finalText = isGraded ? s.final_total : '—';
         const contentText = s.score_content_design !== null ? s.score_content_design : '—';
         const submissionText = s.score_submission !== null ? s.score_submission : '—';
-        const date = new Date(s.submitted_at).toLocaleString('en-PH', {
+        const date = new Date(s.submitted_at).toLocaleString('en-US', {
             month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
         });
 
@@ -151,13 +150,20 @@ function renderSubmissions() {
                 <td class="score-cell ${finalClass}">${finalText}</td>
                 <td><small>${date}</small></td>
                 <td>
-                    <button class="grade-btn ${isGraded ? 'graded' : ''}" onclick="openGradeModal('${s.id}')">
+                    <button type="button" class="grade-btn ${isGraded ? 'graded' : ''}" data-id="${s.id}">
                         ${isGraded ? '✏️ Edit' : '📝 Grade'}
                     </button>
                 </td>
             </tr>
         `;
     }).join('');
+
+    // Attach click handlers via event delegation instead of inline onclick
+    tbody.querySelectorAll('.grade-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            openGradeModal(btn.getAttribute('data-id'));
+        });
+    });
 }
 
 function escapeHtml(str) {
@@ -177,6 +183,13 @@ const saveGradeBtn = document.getElementById('save-grade-btn');
 modalClose.addEventListener('click', closeModal);
 gradeModal.addEventListener('click', (e) => {
     if (e.target === gradeModal) closeModal();
+});
+
+// Close modal on Escape key
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && gradeModal.style.display !== 'none') {
+        closeModal();
+    }
 });
 
 function closeModal() {
@@ -228,11 +241,11 @@ saveGradeBtn.addEventListener('click', async () => {
 
     // Validate
     if (isNaN(contentScore) || contentScore < 0 || contentScore > 15) {
-        alert('Content & Design score dapat 0-15 lang.');
+        alert('Content & Design score must be between 0 and 15.');
         return;
     }
     if (isNaN(submissionScore) || submissionScore < 0 || submissionScore > 5) {
-        alert('Submission score dapat 0-5 lang.');
+        alert('Submission score must be between 0 and 5.');
         return;
     }
 
@@ -285,7 +298,7 @@ document.getElementById('export-btn').addEventListener('click', exportCSV);
 function exportCSV() {
     const filtered = getFilteredSubmissions();
     if (filtered.length === 0) {
-        alert('Walang data na i-export.');
+        alert('No data to export.');
         return;
     }
 

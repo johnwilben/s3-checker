@@ -1,10 +1,10 @@
 -- =============================================
 -- Supabase Schema for S3 Website Checker
--- Run this sa Supabase SQL Editor
+-- Run this in the Supabase SQL Editor
 -- =============================================
 
 -- 1. Table: submissions
--- Dito mase-save ang bawat student submission
+-- Stores each student submission
 CREATE TABLE IF NOT EXISTS submissions (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     student_name TEXT NOT NULL,
@@ -40,7 +40,7 @@ CREATE TABLE IF NOT EXISTS submissions (
     notes TEXT DEFAULT NULL
 );
 
--- 2. Index para sa mabilis na search
+-- 2. Indexes for fast lookups
 CREATE INDEX IF NOT EXISTS idx_submissions_student_id ON submissions(student_id);
 CREATE INDEX IF NOT EXISTS idx_submissions_section ON submissions(section);
 CREATE INDEX IF NOT EXISTS idx_submissions_submitted_at ON submissions(submitted_at DESC);
@@ -53,19 +53,19 @@ CREATE POLICY "Anyone can submit" ON submissions
     FOR INSERT
     WITH CHECK (true);
 
--- Policy: Anyone can SELECT (para makita ng students ang results nila, at instructor makita lahat)
+-- Policy: Anyone can SELECT (students see their results, instructor sees all)
 CREATE POLICY "Anyone can view submissions" ON submissions
     FOR SELECT
     USING (true);
 
--- Policy: Anyone can UPDATE (para ma-grade ng instructor)
--- Sa production, i-restrict ito sa authenticated instructors lang
+-- Policy: Anyone can UPDATE (so instructor can grade)
+-- In production, restrict this to authenticated instructors only
 CREATE POLICY "Anyone can update" ON submissions
     FOR UPDATE
     USING (true)
     WITH CHECK (true);
 
--- 4. Function: auto-update ang updated_at
+-- 4. Function: auto-update the updated_at timestamp
 CREATE OR REPLACE FUNCTION update_updated_at()
 RETURNS TRIGGER AS $$
 BEGIN
