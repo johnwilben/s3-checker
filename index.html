@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>S3 Static Website Hosting - Rubrics & Checker</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-icon">☁️</div>
+            <h1>AWS S3 Static Website Hosting</h1>
+            <p class="subtitle">Rubrics & Automated Checker para sa College Students</p>
+        </header>
+
+        <!-- Tab Navigation -->
+        <nav class="tabs">
+            <button class="tab active" data-tab="rubrics">📋 Rubrics</button>
+            <button class="tab" data-tab="checker">🔍 Checker</button>
+            <button class="tab" data-tab="guide">📖 Guide</button>
+            <button class="tab" data-tab="admin">🔐 Instructor</button>
+        </nav>
+
+        <!-- ==================== RUBRICS TAB ==================== -->
+        <section id="rubrics" class="tab-content active">
+            <div class="rubrics-header">
+                <h2>Grading Rubrics</h2>
+                <p>Total: <strong>100 points</strong> | Passing: <strong>70 points</strong></p>
+            </div>
+
+            <div class="rubrics-table-wrapper">
+                <table class="rubrics-table">
+                    <thead>
+                        <tr>
+                            <th>Criteria</th>
+                            <th>Points</th>
+                            <th>Excellent</th>
+                            <th>Good</th>
+                            <th>Needs Improvement</th>
+                            <th>Not Met</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="criteria-name">
+                                <span class="criteria-icon">🌐</span>
+                                <div>
+                                    <strong>Website Accessibility</strong>
+                                    <small>Naa-access ba ang website sa browser?</small>
+                                </div>
+                            </td>
+                            <td class="points">20</td>
+                            <td><span class="score-badge excellent">20</span> Website loads successfully with HTTP 200</td>
+                            <td><span class="score-badge good">15</span> Loads but may have intermittent issues</td>
+                            <td><span class="score-badge needs">10</span> Partially loads or has errors</td>
+                            <td><span class="score-badge not-met">0</span> Not accessible / 403/404 error</td>
+                        </tr>
+                        <tr>
+                            <td class="criteria-name">
+                                <span class="criteria-icon">🔗</span>
+                                <div>
+                                    <strong>Correct S3 URL Format</strong>
+                                    <small>Tama ba ang S3 website endpoint URL?</small>
+                                </div>
+                            </td>
+                            <td class="points">15</td>
+                            <td><span class="score-badge excellent">15</span> Proper S3 website endpoint format</td>
+                            <td><span class="score-badge good">10</span> S3 URL but not website endpoint</td>
+                            <td><span class="score-badge needs">5</span> S3 URL with minor format issues</td>
+                            <td><span class="score-badge not-met">0</span> Not an S3 URL at all</td>
+                        </tr>
+                        <tr>
+                            <td class="criteria-name">
+                                <span class="criteria-icon">📄</span>
+                                <div>
+                                    <strong>Index Document</strong>
+                                    <small>May index.html ba na naka-configure?</small>
+                                </div>
+                            </td>
+                            <td class="points">15</td>
+                            <td><span class="score-badge excellent">15</span> index.html loads as default page</td>
+                            <td><span class="score-badge good">10</span> Index page exists but has issues</td>
+                            <td><span class="score-badge needs">5</span> Partially configured</td>
+                            <td><span class="score-badge not-met">0</span> No index document configured</td>
+                        </tr>
+                        <tr>
+                            <td class="criteria-name">
+                                <span class="criteria-icon">🚫</span>
+                                <div>
+                                    <strong>Error Document</strong>
+                                    <small>May custom error page ba (error.html)?</small>
+                                </div>
+                            </td>
+                            <td class="points">10</td>
+                            <td><span class="score-badge excellent">10</span> Custom error page working</td>
+                            <td><span class="score-badge good">7</span> Error page exists but basic</td>
+                            <td><span class="score-badge needs">4</span> Partially working</td>
+                            <td><span class="score-badge not-met">0</span> No custom error page</td>
+                        </tr>
+                        <tr>
+                            <td class="criteria-name">
+                                <span class="criteria-icon">🔓</span>
+                                <div>
+                                    <strong>Bucket Policy</strong>
+                                    <small>Tama ba ang public access bucket policy?</small>
+                                </div>
+                            </td>
+                            <td class="points">10</td>
+                            <td><span class="score-badge excellent">10</span> Proper public read policy</td>
+                            <td><span class="score-badge good">7</span> Works but overly permissive</td>
+                            <td><span class="score-badge needs">4</span> Partially configured</td>
+                            <td><span class="score-badge not-met">0</span> No bucket policy / access denied</td>
+                        </tr>
+                        <tr>
+                            <td class="criteria-name">
+                                <span class="criteria-icon">🎨</span>
+                                <div>
+                                    <strong>Website Content & Design</strong>
+                                    <small>May meaningful content at presentable design?</small>
+                                </div>
+                            </td>
+                            <td class="points">15</td>
+                            <td><span class="score-badge excellent">15</span> Well-designed with CSS, images, content</td>
+                            <td><span class="score-badge good">10</span> Has content and basic styling</td>
+                            <td><span class="score-badge needs">5</span> Minimal content, little styling</td>
+                            <td><span class="score-badge not-met">0</span> Default/blank page only</td>
+                        </tr>
+                        <tr>
+                            <td class="criteria-name">
+                                <span class="criteria-icon">📁</span>
+                                <div>
+                                    <strong>Multiple Pages / Assets</strong>
+                                    <small>May ibang pages o assets (CSS, JS, images)?</small>
+                                </div>
+                            </td>
+                            <td class="points">10</td>
+                            <td><span class="score-badge excellent">10</span> Multiple pages with CSS/JS/images</td>
+                            <td><span class="score-badge good">7</span> At least 1 extra page or assets</td>
+                            <td><span class="score-badge needs">4</span> Single page with inline styles</td>
+                            <td><span class="score-badge not-met">0</span> Single bare HTML file only</td>
+                        </tr>
+                        <tr>
+                            <td class="criteria-name">
+                                <span class="criteria-icon">⏰</span>
+                                <div>
+                                    <strong>Submission</strong>
+                                    <small>Na-submit ba on time at kumpleto?</small>
+                                </div>
+                            </td>
+                            <td class="points">5</td>
+                            <td><span class="score-badge excellent">5</span> On time with complete URL</td>
+                            <td><span class="score-badge good">3</span> Late (within 24hrs)</td>
+                            <td><span class="score-badge needs">1</span> Late (more than 24hrs)</td>
+                            <td><span class="score-badge not-met">0</span> Not submitted</td>
+                        </tr>
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td><strong>TOTAL</strong></td>
+                            <td class="points"><strong>100</strong></td>
+                            <td colspan="4"></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+
+            <div class="rubrics-notes">
+                <h3>📌 Notes:</h3>
+                <ul>
+                    <li>Ang automated checker ay nagche-check ng <strong>technical criteria</strong> (accessibility, URL format, index/error documents, assets).</li>
+                    <li>Ang <strong>content & design</strong> at <strong>submission timeliness</strong> ay manu-manong i-grade ng instructor.</li>
+                    <li>Siguraduhing ang S3 website endpoint URL ang isusumit, hindi ang S3 console link.</li>
+                    <li>Passing score: <strong>70/100</strong></li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- ==================== CHECKER TAB ==================== -->
+        <section id="checker" class="tab-content">
+            <div class="checker-container">
+                <!-- Student Info Form -->
+                <div class="checker-input-section">
+                    <h2>🔍 S3 Website Checker & Submit</h2>
+                    <p>Punan ang info mo at i-paste ang S3 URL para ma-check at ma-save ang submission.</p>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="student-name">Pangalan:</label>
+                            <input type="text" id="student-name" placeholder="Juan Dela Cruz" autocomplete="name">
+                        </div>
+                        <div class="form-group">
+                            <label for="student-id">Student ID:</label>
+                            <input type="text" id="student-id" placeholder="2026-00123" autocomplete="off">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="student-section">Section:</label>
+                        <input type="text" id="student-section" placeholder="BSIT-3A" autocomplete="off">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="s3-url">S3 Website Endpoint URL:</label>
+                        <input 
+                            type="url" 
+                            id="s3-url" 
+                            placeholder="http://your-bucket-name.s3-website-ap-southeast-1.amazonaws.com"
+                            autocomplete="off"
+                        >
+                        <small class="url-hint">Format: <code>http://bucket-name.s3-website-region.amazonaws.com</code></small>
+                    </div>
+
+                    <button id="check-btn" class="check-button">
+                        <span class="btn-text">▶️ Check & Submit</span>
+                        <span class="btn-loading" style="display:none;">⏳ Checking...</span>
+                    </button>
+                </div>
+
+                <!-- Results Section -->
+                <div id="results" class="results-section" style="display:none;">
+                    <div class="results-header">
+                        <h3>📊 Check Results</h3>
+                        <div id="total-score" class="total-score"></div>
+                    </div>
+
+                    <div id="results-list" class="results-list"></div>
+
+                    <div id="save-status" class="save-status" style="display:none;"></div>
+
+                    <div id="manual-note" class="manual-note">
+                        <p>⚠️ <strong>Note:</strong> Ang Content & Design (15pts) at Submission (5pts) ay manu-manong i-grade ng instructor. Ang results mo ay naka-save na sa system.</p>
+                    </div>
+
+                    <div class="results-actions">
+                        <button id="copy-results" class="action-btn">📋 Copy Results</button>
+                        <button id="recheck-btn" class="action-btn secondary">🔄 Check Ulit</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== GUIDE TAB ==================== -->
+        <section id="guide" class="tab-content">
+            <div class="guide-container">
+                <h2>📖 Step-by-Step Guide: S3 Static Website Hosting</h2>
+                
+                <div class="guide-step">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <h3>Gumawa ng S3 Bucket</h3>
+                        <ul>
+                            <li>Pumunta sa <strong>AWS Console → S3</strong></li>
+                            <li>Click <strong>"Create bucket"</strong></li>
+                            <li>Lagyan ng unique na bucket name (e.g., <code>juan-portfolio-2026</code>)</li>
+                            <li>Piliin ang region (e.g., <code>ap-southeast-1</code> para Singapore)</li>
+                            <li><strong>Uncheck</strong> ang "Block all public access" checkbox</li>
+                            <li>Acknowledge ang warning at click <strong>"Create bucket"</strong></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="guide-step">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <h3>I-enable ang Static Website Hosting</h3>
+                        <ul>
+                            <li>Buksan ang bucket → <strong>Properties</strong> tab</li>
+                            <li>Scroll down sa <strong>"Static website hosting"</strong></li>
+                            <li>Click <strong>"Edit"</strong> → Enable</li>
+                            <li>Index document: <code>index.html</code></li>
+                            <li>Error document: <code>error.html</code></li>
+                            <li>Click <strong>"Save changes"</strong></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="guide-step">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <h3>I-set ang Bucket Policy</h3>
+                        <ul>
+                            <li>Pumunta sa <strong>Permissions</strong> tab</li>
+                            <li>Sa <strong>"Bucket policy"</strong>, click <strong>"Edit"</strong></li>
+                            <li>I-paste ang policy na ito (palitan ang <code>YOUR-BUCKET-NAME</code>):</li>
+                        </ul>
+                        <pre><code>{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "PublicReadGetObject",
+            "Effect": "Allow",
+            "Principal": "*",
+            "Action": "s3:GetObject",
+            "Resource": "arn:aws:s3:::YOUR-BUCKET-NAME/*"
+        }
+    ]
+}</code></pre>
+                    </div>
+                </div>
+
+                <div class="guide-step">
+                    <div class="step-number">4</div>
+                    <div class="step-content">
+                        <h3>I-upload ang Website Files</h3>
+                        <ul>
+                            <li>Pumunta sa <strong>Objects</strong> tab → Click <strong>"Upload"</strong></li>
+                            <li>I-upload ang mga files:
+                                <ul>
+                                    <li><code>index.html</code> — main page</li>
+                                    <li><code>error.html</code> — custom error page</li>
+                                    <li><code>style.css</code> — stylesheet</li>
+                                    <li><code>images/</code> — folder para sa images</li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="guide-step">
+                    <div class="step-number">5</div>
+                    <div class="step-content">
+                        <h3>Kunin ang Website URL at I-submit</h3>
+                        <ul>
+                            <li>Pumunta sa <strong>Properties</strong> tab</li>
+                            <li>Scroll down sa <strong>"Static website hosting"</strong></li>
+                            <li>Kopyahin ang <strong>Bucket website endpoint</strong></li>
+                            <li>I-paste sa <strong>Checker</strong> tab at i-submit! 🎉</li>
+                        </ul>
+                        <div class="tip-box">
+                            <strong>💡 Tip:</strong> Ang URL ay ganito ang format:<br>
+                            <code>http://bucket-name.s3-website-region.amazonaws.com</code>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="common-issues">
+                    <h3>🔧 Common Issues & Fixes</h3>
+                    <div class="issue">
+                        <strong>403 Forbidden</strong>
+                        <p>Hindi naka-uncheck ang "Block all public access" o walang bucket policy.</p>
+                    </div>
+                    <div class="issue">
+                        <strong>404 Not Found</strong>
+                        <p>Walang <code>index.html</code> sa bucket o mali ang filename (case-sensitive!).</p>
+                    </div>
+                    <div class="issue">
+                        <strong>Website hindi nag-lo-load</strong>
+                        <p>Hindi naka-enable ang Static Website Hosting sa Properties.</p>
+                    </div>
+                    <div class="issue">
+                        <strong>Mali ang URL format</strong>
+                        <p>Gamitin ang website endpoint, hindi ang S3 object URL.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== ADMIN/INSTRUCTOR TAB ==================== -->
+        <section id="admin" class="tab-content">
+            <div class="admin-container">
+                <!-- Login Gate -->
+                <div id="admin-login" class="admin-login">
+                    <div class="login-card">
+                        <h2>🔐 Instructor Dashboard</h2>
+                        <p>I-enter ang instructor password para ma-access ang submissions.</p>
+                        <div class="form-group">
+                            <label for="admin-password">Password:</label>
+                            <input type="password" id="admin-password" placeholder="Enter password" autocomplete="off">
+                        </div>
+                        <button id="admin-login-btn" class="check-button">🔓 Login</button>
+                        <p id="login-error" class="error-text" style="display:none;">❌ Mali ang password. Try ulit.</p>
+                    </div>
+                </div>
+
+                <!-- Dashboard (hidden until login) -->
+                <div id="admin-dashboard" style="display:none;">
+                    <div class="dashboard-header">
+                        <h2>📊 Instructor Dashboard</h2>
+                        <div class="dashboard-actions">
+                            <button id="refresh-btn" class="action-btn">🔄 Refresh</button>
+                            <button id="export-btn" class="action-btn">📥 Export CSV</button>
+                            <button id="logout-btn" class="action-btn secondary">🚪 Logout</button>
+                        </div>
+                    </div>
+
+                    <!-- Stats Cards -->
+                    <div class="stats-grid" id="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-number" id="stat-total">0</div>
+                            <div class="stat-label">Total Submissions</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="stat-graded">0</div>
+                            <div class="stat-label">Graded</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="stat-avg">0</div>
+                            <div class="stat-label">Avg Auto Score</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="stat-passing">0</div>
+                            <div class="stat-label">Passing (≥70)</div>
+                        </div>
+                    </div>
+
+                    <!-- Filters -->
+                    <div class="filters-bar">
+                        <div class="form-group compact">
+                            <label for="filter-section">Section:</label>
+                            <select id="filter-section">
+                                <option value="">Lahat</option>
+                            </select>
+                        </div>
+                        <div class="form-group compact">
+                            <label for="filter-status">Status:</label>
+                            <select id="filter-status">
+                                <option value="">Lahat</option>
+                                <option value="graded">Graded</option>
+                                <option value="ungraded">Ungraded</option>
+                            </select>
+                        </div>
+                        <div class="form-group compact">
+                            <label for="filter-search">Search:</label>
+                            <input type="text" id="filter-search" placeholder="Name o Student ID...">
+                        </div>
+                    </div>
+
+                    <!-- Submissions Table -->
+                    <div class="submissions-table-wrapper">
+                        <table class="submissions-table" id="submissions-table">
+                            <thead>
+                                <tr>
+                                    <th>Student</th>
+                                    <th>Section</th>
+                                    <th>S3 URL</th>
+                                    <th>Auto Score</th>
+                                    <th>Content (15)</th>
+                                    <th>Submission (5)</th>
+                                    <th>Final</th>
+                                    <th>Submitted</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="submissions-body">
+                                <tr>
+                                    <td colspan="9" class="empty-state">Loading submissions...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== GRADE MODAL ==================== -->
+        <div id="grade-modal" class="modal" style="display:none;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>📝 Grade Submission</h3>
+                    <button class="modal-close" id="modal-close">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="modal-student-info" id="modal-student-info"></div>
+                    
+                    <div class="modal-auto-scores" id="modal-auto-scores"></div>
+
+                    <hr>
+
+                    <div class="form-group">
+                        <label for="grade-content">🎨 Content & Design Score (0-15):</label>
+                        <input type="number" id="grade-content" min="0" max="15" placeholder="0-15">
+                    </div>
+                    <div class="form-group">
+                        <label for="grade-submission">⏰ Submission Score (0-5):</label>
+                        <input type="number" id="grade-submission" min="0" max="5" placeholder="0-5">
+                    </div>
+                    <div class="form-group">
+                        <label for="grade-notes">📝 Notes (optional):</label>
+                        <textarea id="grade-notes" rows="3" placeholder="Comments para sa student..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="save-grade-btn" class="check-button">💾 Save Grade</button>
+                </div>
+            </div>
+        </div>
+
+        <footer class="footer">
+            <p>AWS S3 Static Website Hosting — Lab Activity Checker | For Educational Purposes Only</p>
+        </footer>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="config.js"></script>
+    <script src="checker.js"></script>
+    <script src="admin.js"></script>
+</body>
+</html>
